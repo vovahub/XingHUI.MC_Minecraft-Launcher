@@ -1,3 +1,4 @@
+# 本项目采用 2 空格缩进，此风格旨在提升代码紧凑性与可读性，符合现代较新 Python 解释器规范，不产生语法或运行错误。
 import psutil
 import matplotlib.pyplot as plt
 import GPUtil
@@ -213,10 +214,12 @@ def 获取json(版本):
 
 class 解析():
   def 生成启动参数(元组数据,设置参数):
-    用户名 = 设置参数["用户名"]
+    游戏名 = 设置参数["游戏名"]
+    游戏目录 = 设置参数["游戏目录"]
     try:
       if 元组数据["minimumLauncherVersion"] >= 21:
         # 解析json
+        json解析_ID = 元组数据["id"]
         json解析_启动参数配置 = 元组数据["arguments"]
         json解析_资源索引配置 = 元组数据["assetIndex"]
         json解析_核心文件下载配置 = 元组数据["downloads"]
@@ -227,17 +230,21 @@ class 解析():
         json解析_版本发布时间 = 元组数据["releaseTime"]
         json解析_版本发行版本 = 元组数据["type"]
         # 启动参数
-        游戏启动参数配置 = json解析_启动参数配置["game"]
-        print(f"抓取到游戏启动参数配置\n{游戏启动参数配置}")
-        索引 = 游戏启动参数配置.index("${auth_player_name}")
-        游戏启动参数配置[索引] = f"{用户名}"
+        启动参数列表 = json解析_启动参数配置["game"]
+        print(f"抓取到游戏启动参数配置\n{启动参数列表}")
+        字符串 = " ".join(启动参数列表)
+        字符串 = 字符串.replace("${auth_player_name}", f"{游戏名}")   #游戏名参数
+        字符串 = 字符串.replace("${version_name}", f"{json解析_ID}")   #游戏版本参数
+        字符串 = 字符串.replace("${game_directory}", f"{游戏目录}")
+        字符串 = 字符串.replace("${version_type}", f"{json解析_版本发行版本}")
+        # 字符串 = 字符串.replace("", f"{}")
         # 最终播报
         print("解析成功")
     except Exception as e:
       print(f"解析失败:{e}")
 # ------------------------------主程序------------------------------
 默认设置参数 = {
-  "用户名":"测试",
+  "游戏名":"测试",
   "游戏目录":"0",
   "资源目录":"0",
   "资源索引版本":"0",
@@ -252,6 +259,7 @@ class 解析():
   "用户类型":"legacy",
   # 版本类型,正式版的话要写release
   "版本类型":"release",
+  "游戏目录":"",
   "jvm虚拟机参数_java.exe路径":"",
   "jvm虚拟机参数_最大内存":"",
   "jvm虚拟机参数_标准内存":"",
