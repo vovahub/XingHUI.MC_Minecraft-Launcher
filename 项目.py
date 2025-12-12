@@ -199,6 +199,7 @@ class 文件:     #管理和下载文件函数
         f.write(chunk)
 # ------------------------------打包类(II)------------------------------
 def 获取json(版本):
+  print(f"接收到任务:获取json版本信息{版本}")
   URL链 = f"https://bmclapi2.bangbang93.com/version/{版本}/json"
   try:
     response = requests.get(URL链)
@@ -214,8 +215,20 @@ def 获取json(版本):
 
 class 解析():
   def 生成启动参数(元组数据,设置参数):
+    # 游戏参数
     游戏名 = 设置参数["游戏名"]
     游戏目录 = 设置参数["游戏目录"]
+    资源目录 = 设置参数["资源目录"]
+    资源索引版本 = 设置参数["资源索引版本"]
+    用户UUID = 设置参数["用户UUID"]
+    访问令牌 = 设置参数["访问令牌"]
+    客户端ID = 设置参数["客户端ID"]
+    微软XboxID = 设置参数["XboxID"]
+    用户类型 = 设置参数["用户类型"] 
+    # JVM虚拟机参数
+    JavaEXE路径 = 设置参数["jvm虚拟机参数_java.exe路径"]
+    Java虚拟机最大内存 = "-Xmx" + 设置参数["jvm虚拟机参数_最大内存"]
+    Java虚拟机最小内存 = "-Xms" + 设置参数["jvm虚拟机参数_标准内存"]
     try:
       if 元组数据["minimumLauncherVersion"] >= 21:
         # 解析json
@@ -230,20 +243,44 @@ class 解析():
         json解析_版本发布时间 = 元组数据["releaseTime"]
         json解析_版本发行版本 = 元组数据["type"]
         # 启动参数
-        启动参数列表 = json解析_启动参数配置["game"]
-        print(f"抓取到游戏启动参数配置\n{启动参数列表}")
+        # 过滤掉字典
+        游戏启动参数列表 = []
+        for 参数 in json解析_启动参数配置["game"]:
+          if isinstance(参数, str):
+              游戏启动参数列表.append(参数)  
+        
+        JVM参数列表 = ["java","-Xmx","-Xms","-XX:+UseG1GC","原生库路径","-cp","所有jar","主类"]
+        原生库路径 = "-Djava.library.path=" + "./natives"
+        # 合并预设的JVM参数
+        启动参数列表 = JVM参数列表 + 游戏启动参数列表
+        
+        print(f"抓取到游戏启动参数并合并jvm配置\n{启动参数列表}\n")
         字符串 = " ".join(启动参数列表)
+        # 整理游戏参数配置
         字符串 = 字符串.replace("${auth_player_name}", f"{游戏名}")   #游戏名参数
         字符串 = 字符串.replace("${version_name}", f"{json解析_ID}")   #游戏版本参数
-        字符串 = 字符串.replace("${game_directory}", f"{游戏目录}")
-        字符串 = 字符串.replace("${version_type}", f"{json解析_版本发行版本}")
+        字符串 = 字符串.replace("${game_directory}", f"{游戏目录}")   #游戏目录参数
+        字符串 = 字符串.replace("${assets_root}", f"{资源目录}")   #游戏目录里面的资源目录参数
+        字符串 = 字符串.replace("${assets_index_name}", f"{资源索引版本}")   #资源目录的索引版本
+        字符串 = 字符串.replace("${auth_uuid}", f"{用户UUID}")   #顾名思义,写个UUID在里面
+        字符串 = 字符串.replace("${auth_access_token}", f"{访问令牌}")    #访问令牌,离线写0
+        字符串 = 字符串.replace("${clientid}", f"{客户端ID}")   #客户端ID,离线写0,有时也叫做客户端令牌但那是错的
+        字符串 = 字符串.replace("${auth_xuid}", f"{微软XboxID}")    #XboxID,离线写0
+        字符串 = 字符串.replace("${user_type}", f"{用户类型}")    #用户类型,试玩版要写demo,离线是legacy或者mojang,真实账号写msa
+        字符串 = 字符串.replace("${version_type}", f"{json解析_版本发行版本}")   
+        # 整理JVM虚拟机配置
+        字符串 = 字符串.replace("java", f"{JavaEXE路径}")
+        字符串 = 字符串.replace("-Xmx", f"{Java虚拟机最大内存}")
+        字符串 = 字符串.replace("-Xms", f"{Java虚拟机最小内存}")
+        字符串 = 字符串.replace("原生库路径", f"{原生库路径}")
+        字符串 = 字符串.replace("主类", f"{json解析_游戏主类配置}")
         # 字符串 = 字符串.replace("", f"{}")
         # 最终播报
-        print("解析成功")
+        print(f"解析成功,{字符串}")
     except Exception as e:
       print(f"解析失败:{e}")
 # ------------------------------主程序------------------------------
-默认设置参数 = {
+设置参数 = {
   "游戏名":"测试",
   "游戏目录":"0",
   "资源目录":"0",
@@ -252,18 +289,15 @@ class 解析():
   # 试玩版访问令牌,离线写0
   "访问令牌":"0",
   # 客户端令牌,离线写0
-  "客户端令牌":"0",
+  "客户端ID":"0",
   # Xbox账户ID,离线写0或者空字符""
   "XboxID":"0",
   # 用户类型,试玩版要写demo,离线是legacy或者mojang,真实账号写msa
   "用户类型":"legacy",
-  # 版本类型,正式版的话要写release
-  "版本类型":"release",
-  "游戏目录":"",
-  "jvm虚拟机参数_java.exe路径":"",
-  "jvm虚拟机参数_最大内存":"",
-  "jvm虚拟机参数_标准内存":"",
-  "jvm虚拟机参数_原生库路径":"",
-  "jvm虚拟机参数_所有jar文件":"",
+  "游戏目录":"0",
+  "jvm虚拟机参数_java.exe路径":"0",
+  "jvm虚拟机参数_最大内存":"0",
+  "jvm虚拟机参数_标准内存":"0",
+  "jvm虚拟机参数_所有jar文件":"0",
   }
-解析.生成启动参数(获取json("1.21.8"), 默认设置参数)
+解析.生成启动参数(获取json("1.21.8"), 设置参数)
