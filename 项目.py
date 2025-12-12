@@ -1,23 +1,17 @@
 # 本项目采用 2 空格缩进，此风格旨在提升代码紧凑性与可读性，符合现代较新 Python 解释器规范，不产生语法或运行错误。
 import psutil
-import matplotlib.pyplot as plt
 import GPUtil
-import zipfile
-import tkinter as tk
-import tkinter.ttk as ttk
 import random
-import string
-from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
+import string 
 import threading
 import time
 import subprocess
-import sys
 import requests
 import json
 import os
-from pathlib import Path
-
-# ------------------------------打包的类(I)------------------------------
+# ------------------------------初始化------------------------------
+默认路径 = "~"
+# ------------------------------打包类(I)------------------------------
 def 获取性能占用():
   开始耗时 = time.time()
   CPU性能占用 = psutil.cpu_percent(interval=0.5)
@@ -104,67 +98,6 @@ class 广播函数:    #广播函数
       self.广播字典[广播名称]()
 广播 = 广播函数()
 
-所有实例 = []
-class ws_dt:     # ws服务器函数
-  def __init__(self, 端口=9000, 处理类=None):
-    self.端口 = 端口
-    self.处理类 = 处理类
-    self.server = None
-    self.所有实例 = []  # 存所有客户端实例
-
-  def 客户端连接(self):
-    """检测当前是否有客户端连接"""
-    return len(self.所有实例) > 0
-  
-  def 客户端数量(self):
-    """获取当前连接的客户端数量"""
-    return len(self.所有实例)
-  
-  def 设置(self, 处理类, 端口=9000):
-    """设置服务器参数"""
-    self.端口 = 端口
-    self.处理类 = 处理类
-      
-  def 开启(self):  # 改名open→开启
-    """启动服务器"""
-    # 动态创建处理类，能访问到ws_dt实例
-    外层self = self  # 保存引用，供内部类使用
-    
-    class 自定义处理类(WebSocket):
-      def handleConnected(客户端self):
-        外层self.所有实例.append(客户端self)
-        客户端self.sendMessage("连接成功！")
-        print("有新客户端链接")
-
-      def handleMessage(客户端self):
-        # 分解客户端信息
-        global 客户端指令, 客户端指令数据
-        客户端消息 = 客户端self.data
-        存1 = json.loads(客户端消息)
-        客户端指令 = list(存1.keys())[0]
-        客户端指令数据 = 存1[客户端指令]
-
-        print(f"收到指令{客户端指令}!携带数据:{客户端指令数据}")  # 打印收到的消息
-        广播.广播(客户端指令)  # 广播收到的消息
-      
-      def handleClose(客户端self):
-          if 客户端self in 外层self.所有实例:
-            外层self.所有实例.remove(客户端self)
-          print("有客户端断开连接")
-    
-    self.server = SimpleWebSocketServer('localhost', self.端口, 自定义处理类)
-    print(f"✅ 服务器启动在端口 {self.端口}")
-    self.server.serveforever()
-  
-  def 说话(self, 内容):  # 改名say→说话
-    """给所有客户端发消息"""
-    for 实例 in self.所有实例:  # 用self.所有实例
-      try:
-        实例.sendMessage(str(内容))
-      except:
-        pass  # 发送失败就跳过
-    print(f"广播给 {len(self.所有实例)} 个客户端: {内容}")
-      
 class 文件:     #管理和下载文件函数
   
   def 检查(路径):
@@ -195,8 +128,9 @@ class 文件:     #管理和下载文件函数
   def 下载_URL(url,path):
     r = requests.get(url, stream=True)
     with open(path, "wb") as f:
-      for chunk in r.iter_content(8192):
+      for chunk in r.iter_content(1024 * 1024):
         f.write(chunk)
+
 # ------------------------------打包类(II)------------------------------
 def 获取json(版本):
   print(f"接收到任务:获取json版本信息{版本}")
@@ -213,8 +147,66 @@ def 获取json(版本):
   except Exception as e:
     print(f"获取我的世界JSON版本数据出错:{e}")
 
+def 初始化文件夹(路径):        
+  global 分类文件夹_主文件夹,分类文件夹_游戏,分类文件夹_JDK,分类文件夹_游戏_实例,分类文件夹_游戏_材质,分类文件夹_游戏_Java库
+  try:
+    if 路径 == "~":
+      分类文件夹_主文件夹 = os.path.join(os.path.expanduser(路径), "xinghui_mc")
+    else:
+      if 检测读写权限(路径) == True:
+        分类文件夹_主文件夹 = os.path.join(路径, "xinghui_mc")
+      else:
+        print("ERROR!路径不合法!")
+        return False
+    print(f"成功合成主文件夹{分类文件夹_主文件夹}")
+    
+    分类文件夹_游戏 = os.path.join(分类文件夹_主文件夹, ".minecraft")
+    print(f"成功合成游戏文件夹{分类文件夹_游戏}")
+    
+    分类文件夹_游戏_实例 = os.path.join(分类文件夹_游戏, "versions")
+    print(f"成功合成游戏实例文件夹{分类文件夹_游戏_实例}")
+    
+    分类文件夹_游戏_材质 = os.path.join(分类文件夹_游戏, "assets")
+    print(f"成功合成游戏材质文件夹{分类文件夹_游戏_材质}")
+    
+    分类文件夹_游戏_Java库 = os.path.join(分类文件夹_游戏, "libraries")
+    print(f"成功合成游戏Java库文件夹{分类文件夹_游戏_Java库}")
+    
+    分类文件夹_JDK = os.path.join(分类文件夹_主文件夹, "JDK")
+    print(f"成功合成JDK文件夹{分类文件夹_JDK}")
+    
+    os.makedirs(分类文件夹_主文件夹, exist_ok=True)
+    os.makedirs(分类文件夹_游戏, exist_ok=True)
+    os.makedirs(分类文件夹_游戏_实例, exist_ok=True)
+    os.makedirs(分类文件夹_游戏_材质, exist_ok=True)
+    os.makedirs(分类文件夹_游戏_Java库, exist_ok=True)
+    os.makedirs(分类文件夹_JDK, exist_ok=True)
+    print("所有文件夹创建或检测成功(yes)")
+    return True
+  except Exception as e:
+    print("所有文件夹创建或检测失败(no)")
+    return False
+
+def 检测读写权限(路径):
+    try:
+        # 创建测试文件
+        测试文件 = os.path.join(路径, "权限测试.tmp")
+        with open(测试文件, "w") as f:
+            f.write("test")
+        
+        # 读取测试文件
+        with open(测试文件, "r") as f:
+            f.read()
+        
+        # 删除测试文件
+        os.remove(测试文件)
+        return True
+    except Exception as e:
+        print(f"error!路径 {路径} 无读写权限: {e}")
+        return False
+
 class 解析():
-  def 生成启动参数(元组数据,设置参数):
+  def 生成启动参数(字典数据,设置参数):
     # 游戏参数
     游戏名 = 设置参数["游戏名"]
     游戏目录 = 设置参数["游戏目录"]
@@ -230,18 +222,18 @@ class 解析():
     Java虚拟机最大内存 = "-Xmx" + 设置参数["jvm虚拟机参数_最大内存"]
     Java虚拟机最小内存 = "-Xms" + 设置参数["jvm虚拟机参数_标准内存"]
     try:
-      if 元组数据["minimumLauncherVersion"] >= 21:
+      if 字典数据["minimumLauncherVersion"] >= 21:
         # 解析json
-        json解析_ID = 元组数据["id"]
-        json解析_启动参数配置 = 元组数据["arguments"]
-        json解析_资源索引配置 = 元组数据["assetIndex"]
-        json解析_核心文件下载配置 = 元组数据["downloads"]
-        json解析_java版本要求配置 = 元组数据["javaVersion"]
-        json解析_游戏依赖库配置 = 元组数据["libraries"]
-        json解析_游戏主类配置 = 元组数据["mainClass"]
-        json解析_最低启动器版本要求 = 元组数据["minimumLauncherVersion"]
-        json解析_版本发布时间 = 元组数据["releaseTime"]
-        json解析_版本发行版本 = 元组数据["type"]
+        json解析_ID = 字典数据["id"]
+        json解析_启动参数配置 = 字典数据["arguments"]
+        json解析_资源索引配置 = 字典数据["assetIndex"]
+        json解析_核心文件下载配置 = 字典数据["downloads"]
+        json解析_java版本要求配置 = 字典数据["javaVersion"]
+        json解析_游戏依赖库配置 = 字典数据["libraries"]
+        json解析_游戏主类配置 = 字典数据["mainClass"]
+        json解析_最低启动器版本要求 = 字典数据["minimumLauncherVersion"]
+        json解析_版本发布时间 = 字典数据["releaseTime"]
+        json解析_版本发行版本 = 字典数据["type"]
         # 启动参数
         # 过滤掉字典
         游戏启动参数列表 = []
@@ -249,7 +241,30 @@ class 解析():
           if isinstance(参数, str):
               游戏启动参数列表.append(参数)  
         
-        JVM参数列表 = ["java","-Xmx","-Xms","-XX:+UseG1GC","原生库路径","-cp","所有jar","主类"]
+        JVM参数列表 = [
+          "java",    # 
+          "-Xmx",    # 
+          "-Xms",    #
+          "-Xss1M",    # 线程栈大小1MB
+          "-Xmn256m",    # 新生代内存256MB
+          # 对于MC的优化
+          "-Dlog4j.formatMsgNoLookups=true",    # 修复代码漏洞
+          "-XX:+UseG1GC",    #使用G1垃圾回收器
+          "-XX:-UseAdaptiveSizePolicy",    # 禁用自适应大小策略（稳定GC行为）
+          "-XX:-OmitStackTraceInFastThrow",  # 保留完整堆栈跟踪（便于调试）
+          "-Dfml.ignoreInvalidMinecraftCertificates=True",    # 忽略证书验证问题
+          "-Dfml.ignorePatchDiscrepancies=True",    # 忽略版本补丁差异
+          "-Dminecraft.launcher.brand=minecraft-launcher",    # 伪装成正版启动器
+          "-Dminecraft.launcher.version=2.1.3674",    # 伪装启动器版本
+          "-Dnarrator=false",     # 禁用旁白功能
+          # 系统伪装
+          '-Dos.name="Windows 10"',    #伪装系统
+          "-Dos.version=10.0",    # 伪装系统版本
+          "原生库路径",    #java原生库路径
+          "-cp",    #
+          "所有jar",    #所有jar文件
+          "主类"    #游戏主类
+          ]
         原生库路径 = "-Djava.library.path=" + "./natives"
         # 合并预设的JVM参数
         启动参数列表 = JVM参数列表 + 游戏启动参数列表
@@ -276,10 +291,41 @@ class 解析():
         字符串 = 字符串.replace("主类", f"{json解析_游戏主类配置}")
         # 字符串 = 字符串.replace("", f"{}")
         # 最终播报
-        print(f"解析成功,{字符串}")
+        print(f"解析成功:{字符串}")
     except Exception as e:
       print(f"解析失败:{e}")
+  
+  def 获取并下载所有文件(元组数据):
+    try:
+      if 元组数据["minimumLauncherVersion"] >= 21:
+        # 解析json
+        json解析_ID = 元组数据["id"]
+        json解析_核心文件下载配置 = 元组数据["downloads"]
+        核心文件下载 = 核心文件下载["client"]
+        核心文件下载 = 核心文件下载["url"]
+        json解析_java版本要求配置 = 元组数据["javaVersion"]
+        json解析_游戏依赖库配置 = 元组数据["libraries"]
+        文件.下载_URL()
+    except Exception as e:
+      print(f"解析失败:{e}")
+
+def 初始化文件夹并读取配置():
+  默认配置文件字典 = {
+    "测试":"测试文本"
+  }
+  配置配置文件字符串 = json.dumps(默认配置文件字典, ensure_ascii=False)
+  if 初始化文件夹(默认路径) == True:
+    配置目录 = os.path.join(分类文件夹_主文件夹, "配置.json")
+    if not 文件.检查(配置目录) == True:
+      print("配置文件不存在,初始化中")
+      文件.写(配置目录, 配置配置文件字符串)
+      print("初始化完毕")
+    配置 = 文件.读(配置目录)
+    配置 = json.loads(配置)
+    return 配置
 # ------------------------------主程序------------------------------
+配置 = 初始化文件夹并读取配置()
+print(f"读取到配置文件:{配置}")
 设置参数 = {
   "游戏名":"测试",
   "游戏目录":"0",
