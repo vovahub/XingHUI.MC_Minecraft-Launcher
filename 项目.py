@@ -51,7 +51,6 @@ def 获取性能占用():
       "内存":f"{内存占用}",
       "独立显卡?": False, 
     }
-  
   换行json_str = json.dumps(数据, ensure_ascii=False, indent=2)
   数据json_str = json.dumps(数据, ensure_ascii=False)
   print(f"获取系统占用信息:\n{换行json_str}")
@@ -300,9 +299,7 @@ class 解析():
       if 元组数据["minimumLauncherVersion"] >= 21:
         # 解析json
         json解析_ID = 元组数据["id"]
-        json解析_核心文件下载配置 = 元组数据["downloads"]
-        核心文件下载 = 核心文件下载["client"]
-        核心文件下载 = 核心文件下载["url"]
+        下载_核心文件 = 元组数据["downloads"]["client"]["url"]
         json解析_java版本要求配置 = 元组数据["javaVersion"]
         json解析_游戏依赖库配置 = 元组数据["libraries"]
         文件.下载_URL()
